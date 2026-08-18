@@ -1,8 +1,20 @@
 package com.khushboo.resumeanalyzer.entity;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "resumes")
@@ -28,7 +40,19 @@ public class Resume {
     @Column(columnDefinition = "LONGTEXT")
     private String extractedText;
 
+    @Column(columnDefinition = "LONGTEXT")
+    private String experience;
+
+    @Column(columnDefinition = "LONGTEXT")
+    private String education;
+
+    private String email;
+    private String phone;
+
     private Integer atsScore;
+
+    @OneToMany(mappedBy = "resume", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Skill> skills;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -96,12 +120,52 @@ public class Resume {
         this.extractedText = extractedText;
     }
 
+    public String getExperience() {
+        return experience;
+    }
+
+    public void setExperience(String experience) {
+        this.experience = experience;
+    }
+
+    public String getEducation() {
+        return education;
+    }
+
+    public void setEducation(String education) {
+        this.education = education;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
     public Integer getAtsScore() {
         return atsScore;
     }
 
     public void setAtsScore(Integer atsScore) {
         this.atsScore = atsScore;
+    }
+
+    public List<Skill> getSkills() {
+        return skills;
+    }
+
+    public void setSkills(List<Skill> skills) {
+        this.skills = skills;
     }
 
     public LocalDateTime getCreatedAt() {
