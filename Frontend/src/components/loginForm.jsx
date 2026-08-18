@@ -1,138 +1,159 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { loginUser } from "../services/authServices";
+import "../styles/AuthForms.css";
 
 function LoginForm() {
-  // State Variables
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
+  const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-
-  // Navigation
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
-  // Handle Login
+  /**
+   * Validate form data
+   */
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = "Invalid email format";
+    }
+
+    if (!formData.password) {
+      newErrors.password = "Password is required";
+    }
+
+    return newErrors;
+  };
+
+  /**
+   * Handle input change
+   */
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value,
+    });
+    // Clear error for this field
+    if (errors[name]) {
+      setErrors({
+        ...errors,
+        [name]: "",
+      });
+    }
+  };
+
+  /**
+   * Handle form submit
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrors({});
 
-    // Validation
-    if (!email || !password) {
-      setError("Please fill in all fields.");
+    // Validate form
+    const newErrors = validateForm();
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
 
+    setLoading(true);
     try {
-      setLoading(true);
-      setError("");
-
-      // Send login request to Spring Boot
       const response = await loginUser({
-        email,
-        password,
+        email: formData.email,
+        password: formData.password,
       });
 
-      // Backend returns { message: "..." }
-      const message = response.data?.message;
-      if (message === "Login Successful!") {
-        // Login successful → Dashboard
+      if (response.token) {
+        setFormData({ email: "", password: "" });
         navigate("/dashboard");
       } else {
-        setError(message || "Invalid Email or Password!");
+        setErrors({ submit: response.message || "Login failed" });
       }
-    } catch (err) {
-      // Server / network error
-      if (err.response) {
-        const apiError = err.response.data?.message || err.response.data;
-        setError(apiError || "Invalid Email or Password!");
-      } else {
-        setError("Unable to connect to server.");
-      }
+    } catch (error) {
+      const errorMessage = error.message || "Invalid email or password";
+      setErrors({ submit: errorMessage });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="container mt-5">
-      <div className="row justify-content-center">
-        <div className="col-md-5">
-          <div className="card shadow p-4">
+    <div className="auth-container">
+      <div className="auth-card">
+        <h2>Welcome Back</h2>
+        <p className="auth-subtitle">Login to your AI Resume Analyzer</p>
 
-            <h2 className="text-center mb-4">
-              Welcome Back
-            </h2>
+        {errors.submit && (
+          <div className="error-message">{errors.submit}</div>
+        )}
 
-            <p className="text-center text-muted">
-              Login to your AI Resume Analyzer
-            </p>
-
-            <form onSubmit={handleSubmit}>
-
-              {/* Email */}
-              <div className="mb-3">
-                <label className="form-label">
-                  Email
-                </label>
-
-                <input
-                  type="email"
-                  className="form-control"
-                  placeholder="Enter your email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-
-              {/* Password */}
-              <div className="mb-3">
-                <label className="form-label">
-                  Password
-                </label>
-
-                <div className="input-group">
-
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    className="form-control"
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-
-                  <button
-                    type="button"
-                    className="btn btn-outline-secondary"
-                    onClick={() =>
-                      setShowPassword(!showPassword)
-                    }
-                  >
-                    {showPassword ? "Hide" : "Show"}
-                  </button>
-
-                </div>
-              </div>
-
-              {/* Error Message */}
-              {error && (
-                <div className="alert alert-danger">
-                  {error}
-                </div>
-              )}
-
-              {/* Login Button */}
-              <button
-                type="submit"
-                className="btn btn-primary w-100"
-                disabled={loading}
-              >
-                {loading ? "Logging in..." : "Login"}
-              </button>
-
-            </form>
-
+        <form onSubmit={handleSubmit} className="auth-form">
+          {/* Email Field */}
+          <div className="form-group">
+            <label htmlFor="email">Email</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="Enter your email"
+              className={errors.email ? "input-error" : ""}
+            />
+            {errors.email && (
+              <span className="error-text">{errors.email}</span>
+            )}
           </div>
+
+          {/* Password Field */}
+          <div className="form-group">
+            <label htmlFor="password">Password</label>
+            <div className="password-input-group">
+              <input
+                type={showPassword ? "text" : "password"}
+                id="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="Enter your password"
+                className={errors.password ? "input-error" : ""}
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? "Hide" : "Show"}
+              </button>
+            </div>
+            {errors.password && (
+              <span className="error-text">{errors.password}</span>
+            )}
+          </div>
+
+          {/* Submit Button */}
+          <button
+            type="submit"
+            className="auth-button"
+            disabled={loading}
+          >
+            {loading ? "Logging in..." : "Login"}
+          </button>
+        </form>
+
+        <div className="auth-footer">
+          <p>
+            Don't have an account?{" "}
+            <a href="/register">Register here</a>
+          </p>
         </div>
       </div>
     </div>
