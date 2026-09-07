@@ -20,7 +20,8 @@ function ProtectedRoute({ children }) {
     );
   }
 
-  return isAuthenticated ? children : <Navigate to="/login" replace />;
+  const token = localStorage.getItem("authToken");
+  return (isAuthenticated || !!token) ? children : <Navigate to="/login" replace />;
 }
 
 export default ProtectedRoute;

@@ -3,7 +3,7 @@ import axiosInstance from "./authServices";
 const API_URL = "http://localhost:8081/api/resumes";
 
 /**
- * Upload a resume
+ * Upload a resume and get AI ATS analysis
  */
 export const uploadResume = async (file) => {
   try {
@@ -39,7 +39,19 @@ export const getUserResumes = async () => {
 };
 
 /**
- * Get a specific resume by ID
+ * Get dashboard aggregated metrics
+ */
+export const getDashboardStats = async () => {
+  try {
+    const response = await axiosInstance.get(`${API_URL}/stats`);
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: "Failed to fetch dashboard stats" };
+  }
+};
+
+/**
+ * Get a specific resume analysis by ID
  */
 export const getResumeById = async (resumeId) => {
   try {
@@ -65,6 +77,7 @@ export const deleteResume = async (resumeId) => {
 export default {
   uploadResume,
   getUserResumes,
+  getDashboardStats,
   getResumeById,
   deleteResume,
 };

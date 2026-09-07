@@ -1,8 +1,222 @@
-.card {
-    transition: all 0.3s ease;
+/* =========================================================
+   AI Resume Analyzer - Professional Clean Design System
+   ========================================================= */
+
+:root {
+  --primary-color: #2563eb;
+  --primary-hover: #1d4ed8;
+  --secondary-color: #475569;
+  --dark-heading: #0f172a;
+  --text-muted: #64748b;
+  --bg-subtle: #f8fafc;
+  --card-border: #e2e8f0;
 }
 
-.card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+/* =========================================================
+   Hero Section
+   ========================================================= */
+.hero-section {
+  padding: 5rem 0 3.5rem 0;
+  text-align: center;
+  background: radial-gradient(circle at 50% 10%, rgba(37, 99, 235, 0.06) 0%, rgba(255, 255, 255, 0) 70%);
+}
+
+.hero-badge-wrapper {
+  margin-bottom: 1.5rem;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.45rem 1.15rem;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 50px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1e40af;
+  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.08);
+}
+
+.hero-title {
+  font-size: 3.25rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--dark-heading);
+  line-height: 1.2;
+  max-width: 860px;
+  margin: 0 auto 1.5rem auto;
+}
+
+.hero-gradient-text {
+  background: linear-gradient(135deg, #2563eb 0%, #6366f1 50%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hero-subtitle {
+  font-size: 1.15rem;
+  color: var(--text-muted);
+  max-width: 680px;
+  margin: 0 auto 2.25rem auto;
+  line-height: 1.65;
+}
+
+.hero-cta-btn {
+  padding: 0.85rem 2rem;
+  font-weight: 600;
+  border-radius: 10px;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+  transition: all 0.25s ease;
+}
+
+.hero-cta-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+}
+
+.hero-secondary-btn {
+  padding: 0.85rem 1.85rem;
+  font-weight: 600;
+  border-radius: 10px;
+  transition: all 0.25s ease;
+}
+
+.hero-secondary-btn:hover {
+  transform: translateY(-2px);
+}
+
+.hero-highlights {
+  border-top: 1px solid rgba(226, 232, 240, 0.8);
+  max-width: 580px;
+  margin: 1.5rem auto 0 auto;
+}
+
+/* =========================================================
+   Features & How It Works
+   ========================================================= */
+.features-section {
+  background-color: #ffffff;
+}
+
+.section-title {
+  font-size: 2rem;
+  letter-spacing: -0.02em;
+  color: var(--dark-heading);
+}
+
+.section-desc {
+  max-width: 600px;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.pro-feature-card {
+  background: #ffffff;
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 2rem 1.5rem;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.pro-feature-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.07);
+  border-color: #cbd5e1;
+}
+
+.feature-icon-wrapper {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+}
+
+.pro-step-box {
+  background: var(--bg-subtle);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  height: 100%;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.pro-step-box:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.05);
+}
+
+.pro-step-num {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin: 0 auto 1.25rem auto;
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25);
+}
+
+/* =========================================================
+   Call To Action
+   ========================================================= */
+.pro-cta-card {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  border-radius: 20px;
+  padding: 3.5rem 3rem;
+  box-shadow: 0 20px 35px -10px rgba(15, 23, 42, 0.25);
+}
+
+.pro-cta-btn {
+  font-weight: 600;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
+  transition: all 0.25s ease;
+}
+
+.pro-cta-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.5);
+}
+
+/* =========================================================
+   Navbar & General Utilities
+   ========================================================= */
+.brand-text {
+  letter-spacing: -0.02em;
+}
+
+.dropdown-item {
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  transition: background-color 0.15s ease;
+}
+
+.dropdown-item:hover {
+  background-color: #f1f5f9;
+}
+
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 2.25rem;
+  }
+  .hero-subtitle {
+    font-size: 1rem;
+  }
+  .pro-cta-card {
+    padding: 2.25rem 1.5rem;
+  }
 }

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import { loginUser } from "../services/authServices";
 import "../styles/AuthForms.css";
 
@@ -11,6 +12,7 @@ function LoginForm() {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   /**
@@ -72,6 +74,7 @@ function LoginForm() {
       });
 
       if (response.token) {
+        login(response);
         setFormData({ email: "", password: "" });
         navigate("/dashboard");
       } else {

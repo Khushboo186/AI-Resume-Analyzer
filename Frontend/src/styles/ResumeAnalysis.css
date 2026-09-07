@@ -1,0 +1,153 @@
+/* Resume Analysis Styles */
+.analysis-container {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.score-card {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  color: #fff;
+  border-radius: 1rem;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+}
+
+.score-circle {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  margin: 0 auto;
+  border: 8px solid rgba(255, 255, 255, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.score-circle:hover {
+  transform: scale(1.05);
+}
+
+.score-circle.score-excellent {
+  border-color: #10b981;
+  color: #10b981;
+  box-shadow: 0 0 25px rgba(16, 185, 129, 0.3);
+}
+
+.score-circle.score-good {
+  border-color: #3b82f6;
+  color: #3b82f6;
+  box-shadow: 0 0 25px rgba(59, 130, 246, 0.3);
+}
+
+.score-circle.score-average {
+  border-color: #f59e0b;
+  color: #f59e0b;
+  box-shadow: 0 0 25px rgba(245, 158, 11, 0.3);
+}
+
+.score-circle.score-low {
+  border-color: #ef4444;
+  color: #ef4444;
+  box-shadow: 0 0 25px rgba(239, 68, 68, 0.3);
+}
+
+.score-value {
+  font-size: 2.75rem;
+  line-height: 1;
+}
+
+.score-label {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.skill-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.4rem 0.85rem;
+  margin: 0.3rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background-color: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+  transition: all 0.2s ease;
+}
+
+.skill-chip:hover {
+  transform: translateY(-2px);
+  background-color: #bae6fd;
+}
+
+.skill-chip.missing {
+  background-color: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+.skill-chip.missing:hover {
+  background-color: #fecaca;
+}
+
+.suggestion-item {
+  border-left: 4px solid transparent;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  background-color: #f8fafc;
+  transition: transform 0.2s ease;
+}
+
+.suggestion-item:hover {
+  transform: translateX(4px);
+}
+
+.suggestion-item.priority-HIGH {
+  border-left-color: #ef4444;
+  background-color: #fff5f5;
+}
+
+.suggestion-item.priority-MEDIUM {
+  border-left-color: #f59e0b;
+  background-color: #fffbeb;
+}
+
+.suggestion-item.priority-LOW {
+  border-left-color: #3b82f6;
+  background-color: #f0f9ff;
+}
+
+.section-bar-bg {
+  height: 8px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.section-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.8s ease-in-out;
+}
+
+@media print {
+  body {
+    background-color: #fff !important;
+  }
+  .no-print, .navbar, .btn {
+    display: none !important;
+  }
+  .analysis-container {
+    max-width: 100% !important;
+  }
+  .score-card {
+    background: #1e293b !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
