@@ -12,6 +12,11 @@ jobs:
     defaults:
       run:
         working-directory: Backend
+    env:
+      SPRING_PROFILES_ACTIVE: test
+      DB_USERNAME: sa
+      DB_PASSWORD: ""
+      JWT_SECRET: test-secret-key-for-github-actions-1234567890
 
     steps:
       - name: Checkout repository
