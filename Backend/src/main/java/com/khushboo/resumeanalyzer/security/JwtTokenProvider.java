@@ -16,13 +16,17 @@ import io.jsonwebtoken.security.Keys;
 @Component
 public class JwtTokenProvider {
 
-    @Value("${app.jwtSecret:mySecretKeyForJWTTokenGenerationAndValidationPurpose12345}")
+    @Value("${app.jwtSecret}")
     private String jwtSecret;
 
     @Value("${app.jwtExpirationInMs:86400000}")
     private int jwtExpirationInMs;
 
     private SecretKey getSigningKey() {
+        if (jwtSecret == null || jwtSecret.isBlank()) {
+            throw new IllegalStateException(
+                    "JWT secret is missing. Configure app.jwtSecret as an environment variable or .env value.");
+        }
         return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
     }
 
@@ -31,9 +35,9 @@ public class JwtTokenProvider {
         Date expiryDate = new Date(now.getTime() + jwtExpirationInMs);
 
         return Jwts.builder()
-                .subject(email)
-                .issuedAt(now)
-                .expiration(expiryDate)
+                .setSubject(email)
+                .setIssuedAt(now)
+                .setExpiration(expiryDate)
                 .signWith(getSigningKey(), SignatureAlgorithm.HS512)
                 .compact();
     }
