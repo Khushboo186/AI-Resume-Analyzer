@@ -4,16 +4,21 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.khushboo.resumeanalyzer.dto.DashboardStatsResponse;
 import com.khushboo.resumeanalyzer.dto.ParsedResumeData;
-import com.khushboo.resumeanalyzer.dto.ResumeUploadResponse;
+import com.khushboo.resumeanalyzer.dto.ResumeAnalysisResponse;
+import com.khushboo.resumeanalyzer.dto.ResumeSummaryDto;
 import com.khushboo.resumeanalyzer.entity.Resume;
 import com.khushboo.resumeanalyzer.entity.Skill;
 import com.khushboo.resumeanalyzer.entity.User;
@@ -37,98 +42,174 @@ public class ResumeService {
     @Autowired
     private PDFParserService pdfParserService;
 
+    @Autowired
+    private AIEngineService aiEngineService;
+
     @Value("${app.upload.dir:uploads/resumes}")
     private String uploadDir;
 
     private static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
     private static final String[] ALLOWED_EXTENSIONS = { "pdf", "doc", "docx" };
 
-    public ResumeUploadResponse uploadResume(Long userId, MultipartFile file) {
+    @Transactional
+    public ResumeAnalysisResponse uploadResume(Long userId, MultipartFile file) {
         try {
-            // Validate file
             validateFile(file);
 
-            // Check if user exists
             User user = userRepository.findById(userId)
                     .orElseThrow(() -> new FileUploadException("User not found"));
 
-            // Create uploads directory if it doesn't exist
             Path uploadPath = Paths.get(uploadDir);
             Files.createDirectories(uploadPath);
 
-            // Generate unique filename
             String originalFileName = file.getOriginalFilename();
             String fileExtension = getFileExtension(originalFileName);
             String uniqueFileName = UUID.randomUUID().toString() + "." + fileExtension;
 
-            // Save file to disk
             Path filePath = uploadPath.resolve(uniqueFileName);
             Files.write(filePath, file.getBytes());
 
-            // Save to database
             Resume resume = new Resume();
             resume.setUser(user);
             resume.setFileName(originalFileName);
             resume.setFilePath(filePath.toString());
             resume.setFileSize(file.getSize());
 
-            Resume savedResume = resumeRepository.save(resume);
-
-            // Parse resume if it's a PDF
+            // Extract and parse
+            String extractedText = "";
+            ParsedResumeData parsedData = new ParsedResumeData();
             if ("pdf".equalsIgnoreCase(fileExtension)) {
                 try {
-                    parseAndStoreResumeData(savedResume, filePath.toString());
+                    extractedText = pdfParserService.extractTextFromPDF(filePath.toString());
+                    parsedData = pdfParserService.parseResumeData(extractedText);
                 } catch (Exception e) {
-                    // Log error but don't fail upload
-                    System.err.println("Error parsing PDF: " + e.getMessage());
+                    System.err.println("Error parsing PDF text: " + e.getMessage());
                 }
             }
 
-            return new ResumeUploadResponse(
-                    savedResume.getId(),
-                    "Resume uploaded and parsed successfully!",
-                    originalFileName,
-                    savedResume.getFileSize(),
-                    true);
+            resume.setExtractedText(extractedText);
+            resume.setEmail(parsedData.getEmail());
+            resume.setPhone(parsedData.getPhone());
+            resume.setExperience(parsedData.getExperience());
+            resume.setEducation(parsedData.getEducation());
+
+            List<String> skills = parsedData.getSkills() != null ? parsedData.getSkills() : new ArrayList<>();
+            AIEngineService.AnalysisResult analysis = aiEngineService.analyzeResume(
+                extractedText, parsedData.getEmail(), parsedData.getPhone(), skills
+            );
+
+            resume.setAtsScore(analysis.getAtsScore());
+            Resume savedResume = resumeRepository.save(resume);
+
+            // Store skills
+            for (String skillName : skills) {
+                Skill skill = new Skill(savedResume, skillName);
+                skillRepository.save(skill);
+            }
+
+            // Build analysis response
+            List<String> missingSkills = aiEngineService.identifyMissingSkills(skills);
+
+            ResumeAnalysisResponse response = new ResumeAnalysisResponse();
+            response.setId(savedResume.getId());
+            response.setFileName(savedResume.getFileName());
+            response.setFileSize(savedResume.getFileSize());
+            response.setAtsScore(analysis.getAtsScore());
+            response.setRating(analysis.getRating());
+            response.setEmail(savedResume.getEmail());
+            response.setPhone(savedResume.getPhone());
+            response.setExperience(savedResume.getExperience());
+            response.setEducation(savedResume.getEducation());
+            response.setSkills(skills);
+            response.setMissingSkills(missingSkills);
+            response.setSuggestions(analysis.getSuggestions());
+            response.setSectionScores(analysis.getSectionScores());
+            response.setWordCount(analysis.getWordCount());
+            response.setCreatedAt(savedResume.getCreatedAt());
+
+            return response;
 
         } catch (IOException e) {
             throw new FileUploadException("Error uploading file: " + e.getMessage());
         }
     }
 
-    /**
-     * Parse resume and store extracted data
-     */
-    private void parseAndStoreResumeData(Resume resume, String filePath) {
-        // Extract text from PDF
-        String extractedText = pdfParserService.extractTextFromPDF(filePath);
-        resume.setExtractedText(extractedText);
+    public ResumeAnalysisResponse getResumeAnalysis(Long resumeId, Long userId) {
+        Resume resume = getResumeById(resumeId, userId);
+        List<Skill> skillEntities = skillRepository.findByResumeId(resumeId);
+        List<String> skills = skillEntities.stream().map(Skill::getSkillName).collect(Collectors.toList());
 
-        // Parse resume data
-        ParsedResumeData parsedData = pdfParserService.parseResumeData(extractedText);
+        AIEngineService.AnalysisResult analysis = aiEngineService.analyzeResume(
+            resume.getExtractedText(), resume.getEmail(), resume.getPhone(), skills
+        );
 
-        // Store parsed data in resume
-        resume.setEmail(parsedData.getEmail());
-        resume.setPhone(parsedData.getPhone());
-        resume.setExperience(parsedData.getExperience());
-        resume.setEducation(parsedData.getEducation());
+        List<String> missingSkills = aiEngineService.identifyMissingSkills(skills);
 
-        // Save updated resume
-        resumeRepository.save(resume);
+        ResumeAnalysisResponse response = new ResumeAnalysisResponse();
+        response.setId(resume.getId());
+        response.setFileName(resume.getFileName());
+        response.setFileSize(resume.getFileSize());
+        response.setAtsScore(resume.getAtsScore() != null ? resume.getAtsScore() : analysis.getAtsScore());
+        response.setRating(analysis.getRating());
+        response.setEmail(resume.getEmail());
+        response.setPhone(resume.getPhone());
+        response.setExperience(resume.getExperience());
+        response.setEducation(resume.getEducation());
+        response.setSkills(skills);
+        response.setMissingSkills(missingSkills);
+        response.setSuggestions(analysis.getSuggestions());
+        response.setSectionScores(analysis.getSectionScores());
+        response.setWordCount(analysis.getWordCount());
+        response.setCreatedAt(resume.getCreatedAt());
 
-        // Store skills in database
-        if (parsedData.getSkills() != null && !parsedData.getSkills().isEmpty()) {
-            for (String skillName : parsedData.getSkills()) {
-                Skill skill = new Skill(resume, skillName);
-                skillRepository.save(skill);
-            }
-        }
+        return response;
     }
 
-    public List<Resume> getUserResumes(Long userId) {
+    public List<ResumeSummaryDto> getUserResumeSummaries(Long userId) {
         userRepository.findById(userId)
                 .orElseThrow(() -> new FileUploadException("User not found"));
-        return resumeRepository.findByUserId(userId);
+        List<Resume> resumes = resumeRepository.findByUserId(userId);
+
+        List<ResumeSummaryDto> list = new ArrayList<>();
+        for (Resume r : resumes) {
+            List<Skill> s = skillRepository.findByResumeId(r.getId());
+            list.add(new ResumeSummaryDto(
+                r.getId(),
+                r.getFileName(),
+                r.getFileSize(),
+                r.getAtsScore() != null ? r.getAtsScore() : 0,
+                s.size(),
+                r.getCreatedAt()
+            ));
+        }
+        return list;
+    }
+
+    public DashboardStatsResponse getDashboardStats(Long userId) {
+        List<ResumeSummaryDto> resumes = getUserResumeSummaries(userId);
+
+        long totalResumes = resumes.size();
+        int averageAtsScore = 0;
+        int totalSkillsCount = 0;
+
+        if (totalResumes > 0) {
+            int scoreSum = 0;
+            for (ResumeSummaryDto r : resumes) {
+                scoreSum += (r.getAtsScore() != null ? r.getAtsScore() : 0);
+                totalSkillsCount += r.getSkillsCount();
+            }
+            averageAtsScore = (int) Math.round((double) scoreSum / totalResumes);
+        }
+
+        // Sort recent resumes by creation date descending
+        resumes.sort((a, b) -> {
+            if (a.getCreatedAt() == null || b.getCreatedAt() == null) return 0;
+            return b.getCreatedAt().compareTo(a.getCreatedAt());
+        });
+
+        List<ResumeSummaryDto> recent = resumes.stream().limit(5).collect(Collectors.toList());
+
+        return new DashboardStatsResponse(totalResumes, averageAtsScore, totalSkillsCount, recent);
     }
 
     public Resume getResumeById(Long resumeId, Long userId) {
@@ -136,21 +217,18 @@ public class ResumeService {
                 .orElseThrow(() -> new FileUploadException("Resume not found"));
     }
 
+    @Transactional
     public void deleteResume(Long resumeId, Long userId) {
         Resume resume = getResumeById(resumeId, userId);
 
-        // Delete file from disk
         try {
             Path filePath = Paths.get(resume.getFilePath());
             Files.deleteIfExists(filePath);
         } catch (IOException e) {
-            throw new FileUploadException("Error deleting file: " + e.getMessage());
+            System.err.println("Warning: could not delete file from disk: " + e.getMessage());
         }
 
-        // Delete skills associated with resume
         skillRepository.deleteByResumeId(resumeId);
-
-        // Delete from database
         resumeRepository.deleteByIdAndUserId(resumeId, userId);
     }
 

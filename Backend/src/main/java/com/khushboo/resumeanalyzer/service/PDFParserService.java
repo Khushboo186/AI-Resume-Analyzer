@@ -9,6 +9,7 @@ import java.util.regex.Pattern;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.khushboo.resumeanalyzer.dto.ParsedResumeData;
@@ -16,6 +17,9 @@ import com.khushboo.resumeanalyzer.exception.FileUploadException;
 
 @Service
 public class PDFParserService {
+
+    @Autowired
+    private AIEngineService aiEngineService;
 
     /**
      * Extract text from PDF file
@@ -50,8 +54,8 @@ public class PDFParserService {
         // Extract phone
         data.setPhone(extractPhone(text));
 
-        // Extract skills
-        data.setSkills(extractSkills(text));
+        // Extract skills using AI Engine
+        data.setSkills(aiEngineService.extractSkills(text));
 
         // Extract experience
         data.setExperience(extractExperience(text));
@@ -66,6 +70,7 @@ public class PDFParserService {
      * Extract email from text
      */
     private String extractEmail(String text) {
+        if (text == null) return null;
         Pattern emailPattern = Pattern.compile("[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}");
         Matcher matcher = emailPattern.matcher(text);
         if (matcher.find()) {
@@ -78,6 +83,7 @@ public class PDFParserService {
      * Extract phone number from text
      */
     private String extractPhone(String text) {
+        if (text == null) return null;
         Pattern phonePattern = Pattern
                 .compile("(?:\\+?91)?[\\s.-]?\\d{10}|(?:\\d{3})[\\s.-]?(?:\\d{3})[\\s.-]?(?:\\d{4})");
         Matcher matcher = phonePattern.matcher(text);
@@ -85,35 +91,6 @@ public class PDFParserService {
             return matcher.group();
         }
         return null;
-    }
-
-    /**
-     * Extract skills from text using keyword matching
-     */
-    private List<String> extractSkills(String text) {
-        List<String> skills = new ArrayList<>();
-        String lowerText = text.toLowerCase();
-
-        // Common technical skills
-        String[] technicalSkills = {
-                "java", "python", "javascript", "typescript", "c++", "c#", "php", "ruby", "go", "rust",
-                "html", "css", "react", "angular", "vue", "nodejs", "express", "spring", "django", "flask",
-                "mysql", "mongodb", "postgresql", "oracle", "sql server",
-                "aws", "azure", "gcp", "kubernetes", "docker",
-                "git", "jenkins", "maven", "gradle", "npm", "webpack",
-                "rest api", "graphql", "microservices", "sql", "nosql",
-                "machine learning", "deep learning", "tensorflow", "pytorch", "scikit-learn",
-                "data analysis", "power bi", "tableau", "excel",
-                "agile", "scrum", "jira", "confluence"
-        };
-
-        for (String skill : technicalSkills) {
-            if (lowerText.contains(skill) && !skills.contains(skill)) {
-                skills.add(skill);
-            }
-        }
-
-        return skills;
     }
 
     /**

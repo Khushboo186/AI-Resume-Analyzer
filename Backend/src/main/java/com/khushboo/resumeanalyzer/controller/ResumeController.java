@@ -1,6 +1,7 @@
 package com.khushboo.resumeanalyzer.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -15,8 +16,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.khushboo.resumeanalyzer.dto.ResumeUploadResponse;
-import com.khushboo.resumeanalyzer.entity.Resume;
+import com.khushboo.resumeanalyzer.dto.DashboardStatsResponse;
+import com.khushboo.resumeanalyzer.dto.ResumeAnalysisResponse;
+import com.khushboo.resumeanalyzer.dto.ResumeSummaryDto;
 import com.khushboo.resumeanalyzer.service.ResumeService;
 import com.khushboo.resumeanalyzer.service.UserService;
 
@@ -30,43 +32,49 @@ public class ResumeController {
     @Autowired
     private UserService userService;
 
-    /**
-     * Upload a new resume
-     */
-    @PostMapping("/upload")
-    public ResponseEntity<ResumeUploadResponse> uploadResume(@RequestParam("file") MultipartFile file) {
+    private Long getCurrentUserId() {
         String email = SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString();
-        Long userId = userService.getUserIdByEmail(email);
-
-        ResumeUploadResponse response = resumeService.uploadResume(userId, file);
-        if (response.isSuccess()) {
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
-        }
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        return userService.getUserIdByEmail(email);
     }
 
     /**
-     * Get all resumes of the user
+     * Upload a new resume and perform AI ATS Analysis
+     */
+    @PostMapping("/upload")
+    public ResponseEntity<ResumeAnalysisResponse> uploadResume(@RequestParam("file") MultipartFile file) {
+        Long userId = getCurrentUserId();
+        ResumeAnalysisResponse response = resumeService.uploadResume(userId, file);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    /**
+     * Get all resumes of the current user
      */
     @GetMapping
-    public ResponseEntity<List<Resume>> getUserResumes() {
-        String email = SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString();
-        Long userId = userService.getUserIdByEmail(email);
-
-        List<Resume> resumes = resumeService.getUserResumes(userId);
+    public ResponseEntity<List<ResumeSummaryDto>> getUserResumes() {
+        Long userId = getCurrentUserId();
+        List<ResumeSummaryDto> resumes = resumeService.getUserResumeSummaries(userId);
         return ResponseEntity.ok(resumes);
     }
 
     /**
-     * Get a specific resume by ID
+     * Get dashboard stats for current user
+     */
+    @GetMapping("/stats")
+    public ResponseEntity<DashboardStatsResponse> getDashboardStats() {
+        Long userId = getCurrentUserId();
+        DashboardStatsResponse stats = resumeService.getDashboardStats(userId);
+        return ResponseEntity.ok(stats);
+    }
+
+    /**
+     * Get a specific resume analysis by ID
      */
     @GetMapping("/{resumeId}")
-    public ResponseEntity<Resume> getResume(@PathVariable Long resumeId) {
-        String email = SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString();
-        Long userId = userService.getUserIdByEmail(email);
-
-        Resume resume = resumeService.getResumeById(resumeId, userId);
-        return ResponseEntity.ok(resume);
+    public ResponseEntity<ResumeAnalysisResponse> getResumeAnalysis(@PathVariable Long resumeId) {
+        Long userId = getCurrentUserId();
+        ResumeAnalysisResponse response = resumeService.getResumeAnalysis(resumeId, userId);
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -74,10 +82,8 @@ public class ResumeController {
      */
     @DeleteMapping("/{resumeId}")
     public ResponseEntity<?> deleteResume(@PathVariable Long resumeId) {
-        String email = SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString();
-        Long userId = userService.getUserIdByEmail(email);
-
+        Long userId = getCurrentUserId();
         resumeService.deleteResume(resumeId, userId);
-        return ResponseEntity.ok(java.util.Map.of("message", "Resume deleted successfully!"));
+        return ResponseEntity.ok(Map.of("message", "Resume deleted successfully!"));
     }
 }
