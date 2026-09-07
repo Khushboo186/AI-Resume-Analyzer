@@ -630,7 +630,7 @@ Full Stack Development
 
 * GitHub: https://github.com/Khushboo186
 * LinkedIn: https://www.linkedin.com/in/khushboo-raizada-2ba24932/
-* LeetCode: https://leetcode.com/u/khushi_Thakur27/
+
 
 ---
 
